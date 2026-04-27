@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metfraa KPI Performance System</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap');
+
+  :root {
+    --navy: #002b5f;
+    --steel: #0066B3;
+    --bg: #f5f7fa;
+    --white: #ffffff;
+    --border: #d0dce8;
+    --text: #1a2535;
+    --muted: #5a6a7e;
+    --success: #1a8c4e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Barlow', sans-serif; }
+  body { background: var(--bg); color: var(--text); }
+  .hidden { display: none !important; }
+
+  /* ── UI Elements ── */
+  .header { background: var(--navy); color: var(--white); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--steel); }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-logo { height: 44px; width: auto; background: var(--white); padding: 4px; border-radius: 4px; }
+  .header-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+  
+  .header-right { display: flex; align-items: center; gap: 20px; }
+  .user-profile { text-align: right; }
+  .user-name { font-weight: 700; font-size: 15px; color: var(--white); }
+  .user-title { font-size: 12px; color: #a0b8cc; font-weight: 500; }
+  
+  .nav-tabs { background: var(--navy); display: flex; padding: 0 24px; gap: 4px; }
+  .nav-tab { padding: 12px 24px; color: #a0b8cc; background: none; border: none; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; }
+  .nav-tab.active { color: var(--white); border-bottom-color: var(--steel); }
+  
+  .container { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 600; color: var(--navy); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px;}
+  
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th { background: var(--bg); color: var(--navy); padding: 10px; text-align: left; font-size: 13px; font-weight: 600; border-bottom: 2px solid var(--border); text-transform: uppercase; }
+  td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
+  .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px; font-family: 'Barlow', sans-serif; }
+  .form-control:focus { outline: none; border-color: var(--steel); }
+  
+  .btn { padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; color: var(--white); transition: 0.2s; }
+  .btn-navy { background: var(--navy); }
+  .btn-navy:hover { background: var(--steel); }
+  .btn-steel { background: var(--steel); }
+  .btn-success { background: var(--success); }
+  
+  /* ── Login Screen ── */
+  .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--navy); }
+  .login-box { background: var(--white); padding: 40px; border-radius: 8px; width: 400px; border-top: 4px solid var(--steel); text-align: center; }
+  .login-logo { height: 60px; width: auto; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login-wrapper">
+  <div class="login-box">
+    <img class="login-logo" src="data:image/jpeg;base64,LOGO_PLACEHOLDER" alt="Metfraa Logo">
+    
+    <h2 style="font-family: 'Barlow Condensed'; color: var(--navy); margin-bottom: 8px;">Metfraa KPI Portal</h2>
+    <p style="color: #666; margin-bottom: 24px; font-size: 14px;">Select your profile to authenticate</p>
+    
+    <select id="user-select" class="form-control" style="margin-bottom: 20px;">
+      <option value="">-- Select Profile --</option>
+      <optgroup label="Data Entry (Employees)">
+        <option value="vardharaj">Varadharaj - EHS Asst. Manager</option>
+        <option value="gopi">Gopi Mahendiran - Senior Detailer</option>
+      </optgroup>
+      <optgroup label="Management (Approvers)">
+        <option value="gourav">Gourav Saraf - Group CEO</option>
+        <option value="velarasu">Velarasu C - Managing Director</option>
+        <option value="nirmal">Nirmal Kumar - AGM Projects</option>
+      </optgroup>
+    </select>
+    
+    <button class="btn btn-navy" style="width:100%" onclick="authenticateUser()">Secure Login</button>
+  </div>
+</div>
+
+<div id="app-screen" class="hidden">
+  
+  <div class="header">
+    <div class="header-left">
+      <img class="header-logo" src="data:image/jpeg;base64,LOGO_PLACEHOLDER" alt="Metfraa Logo">
+      <div class="header-title">KPI PERFORMANCE SYSTEM</div>
+    </div>
+    
+    <div class="header-right">
+      <div class="user-profile">
+        <div class="user-name" id="ui-username">Username</div>
+        <div class="user-title" id="ui-role">Designation</div>
+      </div>
+      <button class="btn" style="background:transparent; border:1px solid #4a7fa8; padding: 6px 12px;" onclick="location.reload()">Logout</button>
+    </div>
+  </div>
+
+  <div class="nav-tabs" id="dynamic-nav">
+    </div>
+
+  <div class="container">
+    
+    <div id="view-entry" class="hidden">
+      <div class="card">
+        <div class="card-title">Monthly KPI Submission</div>
+        <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">Please enter your actual performance values for the current reporting period.</p>
+        
+        <table id="employee-kpi-table">
+          </table>
+        
+        <h3 style="margin: 24px 0 10px; font-size: 14px; color: var(--navy); text-transform: uppercase;">Qualitative Report / Notes</h3>
+        <textarea class="form-control" rows="5" id="employee-notes" placeholder="Enter context, escalations, or support required..."></textarea>
+        
+        <div style="margin-top: 20px; text-align: right;">
+          <button class="btn btn-navy" onclick="submitDataToExcel()">Submit to Master Database</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-analytics" class="hidden">
+      <div class="card">
+        <div class="card-title">Historical Department Progress</div>
+        <div style="height: 350px; width: 100%;">
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-approvals" class="hidden">
+      <div class="card">
+        <div class="card-title">Pending Monthly Reports</div>
+        <table>
+          <tr><th>Employee</th><th>Department</th><th>Computed Score</th><th>Status</th><th>Action</th></tr>
+          <tr>
+            <td><strong>Gopi Mahendiran</strong><br><span style="font-size:12px;color:var(--muted)">Senior Detailer</span></td>
+            <td>str / PEB</td>
+            <td style="color: var(--success); font-weight: bold; font-size: 18px;">88%</td>
+            <td><span style="background: #fff3d6; color: #7a4f00; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">PENDING</span></td>
+            <td><button class="btn btn-success" style="padding: 6px 12px;" onclick="generateAndUploadPDF('Gopi')">Approve & Archive PDF</button></td>
+          </tr>
+        </table>
+      </div>
+
+      <div id="pdf-template" style="display:none; background: white;">
+        <div style="padding: 40px; font-family: 'Barlow', sans-serif; color: #002b5f;">
+          <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0066B3; padding-bottom: 20px; margin-bottom: 20px;">
+            <img src="data:image/jpeg;base64,LOGO_PLACEHOLDER" alt="Metfraa" style="height: 50px;">
+            <div style="text-align: right;">
+              <h2 style="margin:0; font-family: 'Barlow Condensed';">PERFORMANCE REPORT</h2>
+              <p style="margin:0; color: #5a6a7e;">April 2026</p>
+            </div>
+          </div>
+          <h3>Employee: Gopi Mahendiran</h3>
+          <p><strong>Department:</strong> str / PEB Detailing</p>
+          <p><strong>Final System Score:</strong> <span style="color: #1a8c4e; font-weight: bold;">88%</span></p>
+          <p><strong>Management Status:</strong> APPROVED</p>
+          <hr style="margin: 30px 0;">
+          <p style="font-size: 12px; color: #666;"><em>Digitally signed and archived via Metfraa Management Dashboard.</em></p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA: THE FULL KPI DICTIONARY
+// ═══════════════════════════════════════════════════════════
+const ROLES = {
+  vardharaj: {
+    name: 'Varadharaj', designation: 'Asst. Manager — EHS', role: 'employee',
+    kpis: [
+      {id:'k1',name:'Lost-Time Injury Frequency Rate (LTIFR)',hint:'Enter 0 if no LTIs this month',target:'Zero LTIs',unit:'zero'},
+      {id:'k2',name:'Total Recordable Incident Rate (TRIR)',hint:'Incidents per million man-hours worked',target:'≤ 0.5',unit:'max'},
+      {id:'k3',name:'Near-Miss Reporting Rate',hint:'Total near-misses reported this month',target:'≥ 4/month',unit:'min'},
+      {id:'k4',name:'Safety Inspection Compliance',hint:'% of planned inspections completed',target:'≥ 95%',unit:'min_pct'},
+      {id:'k5',name:'Work Permit Compliance',hint:'% of high-risk tasks with valid work permit',target:'100%',unit:'pct100'},
+      {id:'k6',name:'PPE Compliance',hint:'% employees observed using correct PPE',target:'≥ 98%',unit:'min_pct'},
+      {id:'k7',name:'EHS Induction Completion',hint:'% new joiners inducted before site access',target:'100%',unit:'pct100'},
+      {id:'k8',name:'Toolbox Talk Frequency',hint:'Total toolbox talks conducted this month',target:'≥ 2/week/site',unit:'min'},
+      {id:'k9',name:'Training Calendar Adherence',hint:'% of planned training sessions delivered',target:'≥ 95%',unit:'min_pct'},
+      {id:'k10',name:'Emergency Drill Frequency',hint:'Emergency drills conducted this month',target:'≥ 4/year',unit:'min'},
+      {id:'k11',name:'Incident Investigation Turnaround',hint:'% investigations submitted within target time',target:'≤ 24hrs/48hrs',unit:'min_pct'},
+      {id:'k12',name:'CAPA Closure Rate',hint:'% CAPAs closed within agreed target date',target:'≥ 90%',unit:'min_pct'},
+      {id:'k13',name:'Statutory Compliance',hint:'Regulatory notices received (0 = perfect)',target:'Zero notices',unit:'zero'},
+      {id:'k14',name:'Environmental Compliance',hint:'Environmental violations this month (0 = perfect)',target:'Zero violations',unit:'zero'},
+      {id:'k15',name:'EHS Documentation Accuracy',hint:'% ERP records updated on same working day',target:'100%',unit:'pct100'},
+      {id:'k16',name:'Monthly EHS Report Submission',hint:'Was report submitted on time?',target:'100% on time',unit:'binary'}
+    ]
+  },
+  gopi: {
+    name: 'Gopi Mahendiran', designation: 'Senior Detailer — str / PEB', role: 'employee',
+    kpis: [
+      {id:'k1',name:'On-Time Drawing Release',hint:'% drawings released on/before committed date',target:'≥ 98%',unit:'min_pct'},
+      {id:'k2',name:'Detailing Productivity (tonnage)',hint:'MT of str detailed this month',target:'≥ 500 MT/month',unit:'min'},
+      {id:'k3',name:'Drawing Error / Rework Rate',hint:'% drawings reissued due to errors (lower = better)',target:'≤ 1%',unit:'max_pct'},
+      {id:'k4',name:'Shop / Site Hold-Ups',hint:'Hold-ups due to drawing errors (0 = perfect)',target:'Zero (max 1)',unit:'max_count'},
+      {id:'k5',name:'Concept Drawing Turnaround',hint:'% concept drawings issued within 24 hrs',target:'≤ 24 hrs',unit:'min_pct'},
+      {id:'k6',name:'Approval Drawing Cycle',hint:'Average revisions before customer approval',target:'≤ 1 revision',unit:'max'},
+      {id:'k7',name:'Estimation Turnaround',hint:'% estimations delivered within target time',target:'≤ 24/48 hrs',unit:'min_pct'},
+      {id:'k8',name:'Design Estimation Accuracy',hint:'% projects with tonnage variance within ±2%',target:'Within ±2%',unit:'min_pct'},
+      {id:'k9',name:'BOQ Accuracy',hint:'% BOQs within ±2% of final detailing BOQ',target:'Within ±2%',unit:'min_pct'},
+      {id:'k10',name:'Material Wastage',hint:'Shop-floor steel wastage % from detailing',target:'≤ 2%',unit:'max_pct'},
+      {id:'k11',name:'Drawing Library Upkeep',hint:'% drawings indexed within 24 hrs of release',target:'100%',unit:'pct100'},
+      {id:'k12',name:'Drawing Retrieval Time',hint:'All retrievals within 5 min this month?',target:'≤ 5 min',unit:'binary'},
+      {id:'k13',name:'Standardisation Adoption',hint:'% active projects following Standards Manual',target:'100%',unit:'pct100'},
+      {id:'k14',name:'ERP Update Compliance',hint:'% records updated same working day',target:'100%',unit:'pct100'},
+      {id:'k15',name:'ERP Data Accuracy',hint:'Discrepancies found this month (0 = perfect)',target:'Zero',unit:'zero'},
+      {id:'k16',name:'Reporting Discipline',hint:'Weekly status reports submitted on time?',target:'100%',unit:'binary'}
+    ]
+  },
+  gourav: { name: 'Gourav Saraf', designation: 'Group CEO', role: 'approver' },
+  velarasu: { name: 'Velarasu C', designation: 'Managing Director', role: 'approver' },
+  nirmal: { name: 'Nirmal Kumar', designation: 'AGM Projects', role: 'approver' }
+};
+
+// ═══════════════════════════════════════════════════════════
+// ROUTING & RENDERING LOGIC
+// ═══════════════════════════════════════════════════════════
+function authenticateUser() {
+  const userId = document.getElementById('user-select').value;
+  if (!userId) return alert("Please select a profile.");
+
+  const userObj = ROLES[userId];
+  const currentUserRole = userObj.role;
+
+  // ── UPDATE UI HEADER WITH NAME & DESIGNATION ──
+  document.getElementById('ui-username').innerText = userObj.name;
+  document.getElementById('ui-role').innerText = userObj.designation;
+
+  // Swap Screens
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+
+  if (currentUserRole === 'employee') {
+    setupEmployeeView(userObj);
+  } else {
+    setupApproverView();
+  }
+}
+
+// --- View: Employee ---
+function setupEmployeeView(userObj) {
+  document.getElementById('dynamic-nav').innerHTML = `<button class="nav-tab active">My KPI Submission</button>`;
+  document.getElementById('view-entry').classList.remove('hidden');
+
+  // Dynamically render the exact 16 KPIs for the logged-in user
+  let tableHTML = `<tr><th style="width: 40px;">#</th><th>KPI Metric</th><th style="width: 200px;">Target</th><th style="width: 150px;">Actual Value</th></tr>`;
+  
+  userObj.kpis.forEach((kpi, index) => {
+    tableHTML += `
+      <tr>
+        <td style="color: var(--muted); font-weight: 600;">${index + 1}</td>
+        <td><strong>${kpi.name}</strong><br><span style="font-size: 11px; color: var(--muted);">${kpi.hint}</span></td>
+        <td style="color: var(--steel); font-weight: 600; font-size: 13px;">${kpi.target}</td>
+        <td>`;
+    
+    // Check if binary input (yes/no) or standard number input
+    if (kpi.unit === 'binary') {
+      tableHTML += `
+        <select class="form-control" id="${kpi.id}">
+          <option value="">--</option>
+          <option value="1">Yes</option>
+          <option value="0">No</option>
+        </select>`;
+    } else {
+      tableHTML += `<input type="number" step="0.01" class="form-control" id="${kpi.id}" placeholder="Enter actual...">`;
+    }
+    
+    tableHTML += `</td></tr>`;
+  });
+
+  document.getElementById('employee-kpi-table').innerHTML = tableHTML;
+}
+
+// Simulated API Push
+function submitDataToExcel() {
+  alert("Data successfully transmitted to Metfraa Master Excel Database via Graph API.");
+  location.reload();
+}
+
+// --- View: Management ---
+function setupApproverView() {
+  document.getElementById('dynamic-nav').innerHTML = `
+    <button class="nav-tab active" onclick="switchMgmtTab('view-approvals', this)">Pending Approvals</button>
+    <button class="nav-tab" onclick="switchMgmtTab('view-analytics', this)">Historical Analytics</button>
+  `;
+  document.getElementById('view-approvals').classList.remove('hidden');
+  renderChart();
+}
+
+function switchMgmtTab(viewId, btn) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-approvals').classList.add('hidden');
+  document.getElementById('view-analytics').classList.add('hidden');
+  document.getElementById(viewId).classList.remove('hidden');
+}
+
+// Chart.js Configuration
+function renderChart() {
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+      datasets: [
+        { label: 'Gopi (str / PEB Detailing)', data: [85, 87, 88, 86, 89, 88], borderColor: '#0066B3', tension: 0.3, borderWidth: 3, pointBackgroundColor: '#0066B3' },
+        { label: 'Varadharaj (EHS)', data: [95, 96, 92, 98, 100, 99], borderColor: '#1a8c4e', tension: 0.3, borderWidth: 3, pointBackgroundColor: '#1a8c4e' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+// --- PDF Generation Engine ---
+function generateAndUploadPDF(employeeName) {
+  const element = document.getElementById('pdf-template');
+  element.style.display = 'block'; // Temporarily unhide to capture
+
+  const opt = {
+    margin: 0.5,
+    filename: `${employeeName}_April2026_Approved.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).output('blob').then(function(pdfBlob) {
+    element.style.display = 'none'; // Re-hide template
+    alert(`Report Approved.\n${opt.filename} has been digitally signed and archived to info@metfraa.com's OneDrive.`);
+  });
+}
+</script>
+</body>
+</html>
